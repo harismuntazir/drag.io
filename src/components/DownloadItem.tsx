@@ -1,4 +1,5 @@
 import { useDownloadStore, DownloadItem as DownloadItemType } from '@/store/downloadStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { downloadVideo } from '@/lib/tauri';
 import { Loader2, AlertCircle, CheckCircle, Folder } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -7,25 +8,32 @@ import { useState } from 'react';
 export default function DownloadItem({ item }: { item: DownloadItemType }) {
   const updateDownload = useDownloadStore((state) => state.updateDownload);
 
+  const { defaultDownloadPath, setDefaultDownloadPath, maxConcurrentDownloads } = useSettingsStore();
+
   const handleDownload = async (formatId: string) => {
     try {
-        // Open folder picker
-        const selected = await open({
-            directory: true,
-            multiple: false,
-            defaultPath: await import('@tauri-apps/api/path').then(p => p.downloadDir()),
-        });
+        let path = defaultDownloadPath;
 
-        if (selected === null) {
-            // User cancelled
-            return;
+        if (!path) {
+            // Open folder picker if no default set
+            const selected = await open({
+                directory: true,
+                multiple: false,
+                defaultPath: await import('@tauri-apps/api/path').then(p => p.downloadDir()),
+            });
+    
+            if (selected === null) return;
+            path = selected as string;
+            
+            // Optional: could ask user if they want to save this as default, 
+            // but for now per plan we just use it for this session or save if "Always ask" logic is added.
+            // Plan said: "Ask for download folder once, save it as default".
+            setDefaultDownloadPath(path);
         }
         
-        const path = selected as string;
-
         updateDownload(item.id, { status: 'queued', selectedFormatId: formatId, savePath: path });
         
-        await downloadVideo(item.id, item.url, formatId, path);
+        await downloadVideo(item.id, item.url, formatId, path, maxConcurrentDownloads);
     } catch (e) {
         updateDownload(item.id, { status: 'failed', error: String(e) });
     }

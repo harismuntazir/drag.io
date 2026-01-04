@@ -19,6 +19,6 @@ export async function fetchMetadata(url: string): Promise<VideoMetadata> {
   return invoke('fetch_metadata', { url });
 }
 
-export async function downloadVideo(id: string, url: string, formatId: string, path: string): Promise<void> {
-  return invoke('download_video', { id, url, formatId, path });
+export async function downloadVideo(id: string, url: string, formatId: string, path: string, maxConcurrent: number): Promise<void> {
+  return invoke('download_video', { id, url, formatId, path, maxConcurrent });
 }

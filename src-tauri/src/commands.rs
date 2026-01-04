@@ -81,7 +81,7 @@ pub async fn fetch_metadata(app: AppHandle, url: String) -> Result<VideoMetadata
 }
 
 #[tauri::command]
-pub async fn download_video(app: AppHandle, id: String, url: String, format_id: String, path: String) -> Result<(), String> {
+pub async fn download_video(app: AppHandle, id: String, url: String, format_id: String, path: String, max_concurrent: u32) -> Result<(), String> {
     // format_id usually needs to select video+audio.
     // If user selected "137" (1080p), we want "137+bestaudio/best".
     // But format_id passed from frontend might be just the video ID.
@@ -93,7 +93,7 @@ pub async fn download_video(app: AppHandle, id: String, url: String, format_id: 
         .args([
             "-f", &format_arg,
             "-P", &path,
-            "-N", "4",
+            "-N", max_concurrent.to_string().as_str(),
             "--merge-output-format", "mp4",
             "--progress-template", "%(progress.value)s;%(progress.speed)s;%(progress.eta)s",
             &url
