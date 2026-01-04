@@ -2,8 +2,10 @@ import { useEffect, useRef } from 'react';
 import { useDownloadStore } from '@/store/downloadStore';
 import DownloadItem from './DownloadItem';
 import { listen } from '@tauri-apps/api/event';
+import { useQueue } from '@/hooks/useQueue';
 
 export default function DownloadList() {
+  useQueue();
   const downloads = useDownloadStore((state) => state.downloads);
   const updateDownload = useDownloadStore((state) => state.updateDownload);
   const unlistenRef = useRef<(() => void) | null>(null);

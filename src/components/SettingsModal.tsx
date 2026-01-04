@@ -98,6 +98,28 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <span>32 (Fastest / Aggressive)</span>
             </div>
           </div>
+
+          {/* Max Active Downloads (Queue) */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <label className="font-bold block">Max Simultaneous Downloads</label>
+                <span className="font-mono bg-black text-white px-2 py-0.5 rounded text-sm">
+                    {useSettingsStore(s => s.maxActiveDownloads)}
+                </span>
+            </div>
+            <input 
+                type="range" 
+                min="1" 
+                max="5" 
+                value={useSettingsStore(s => s.maxActiveDownloads)}
+                onChange={(e) => useSettingsStore.getState().setMaxActiveDownloads(Number(e.target.value))}
+                className="w-full accent-black h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 font-medium">
+                <span>1 (Sequential)</span>
+                <span>5 (Parallel)</span>
+            </div>
+          </div>
         </div>
 
         <div className="p-4 border-t-2 border-black bg-gray-50 flex justify-end">

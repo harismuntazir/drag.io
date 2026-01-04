@@ -1,12 +1,14 @@
 import { useDownloadStore, DownloadItem as DownloadItemType } from '@/store/downloadStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { downloadVideo } from '@/lib/tauri';
-import { Loader2, AlertCircle, CheckCircle, Folder } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Folder, Trash2 } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
+import { open as openShell } from '@tauri-apps/plugin-shell';
 import { useState } from 'react';
 
 export default function DownloadItem({ item }: { item: DownloadItemType }) {
   const updateDownload = useDownloadStore((state) => state.updateDownload);
+  const removeDownload = useDownloadStore((state) => state.removeDownload);
 
   const { defaultDownloadPath, setDefaultDownloadPath, maxConcurrentDownloads } = useSettingsStore();
 
@@ -33,9 +35,19 @@ export default function DownloadItem({ item }: { item: DownloadItemType }) {
         
         updateDownload(item.id, { status: 'queued', selectedFormatId: formatId, savePath: path });
         
-        await downloadVideo(item.id, item.url, formatId, path, maxConcurrentDownloads);
+        // Queue hook will pick this up automatically
     } catch (e) {
         updateDownload(item.id, { status: 'failed', error: String(e) });
+    }
+  };
+
+  const handleOpenFolder = async () => {
+    if (item.savePath) {
+        try {
+            await openShell(item.savePath);
+        } catch (e) {
+            console.error('Failed to open folder:', e);
+        }
     }
   };
 
@@ -77,7 +89,8 @@ export default function DownloadItem({ item }: { item: DownloadItemType }) {
              </div>
           </div>
         );
-      case 'queued': 
+      case 'queued':
+      case 'initializing':
       case 'downloading':
         return (
           <div className="space-y-2 w-full">
@@ -92,7 +105,9 @@ export default function DownloadItem({ item }: { item: DownloadItemType }) {
                 />
             </div>
             <div className="flex justify-between text-xs text-gray-500">
-                <span>{item.status === 'queued' ? 'Queued' : 'Downloading...'}</span>
+                <span>
+                    {item.status === 'queued' ? 'Queued' : item.status === 'initializing' ? 'Initializing...' : 'Downloading...'}
+                </span>
                 <span>{item.speed} • ETA {item.eta}</span>
             </div>
           </div>
@@ -104,7 +119,10 @@ export default function DownloadItem({ item }: { item: DownloadItemType }) {
                     <CheckCircle className="text-green-500 w-5 h-5" />
                     <span className="font-medium">{item.title}</span>
                 </div>
-                <button className="text-sm border border-gray-300 px-3 py-1 rounded hover:bg-gray-50 flex items-center gap-1">
+                <button 
+                    onClick={handleOpenFolder}
+                    className="text-sm border border-gray-300 px-3 py-1 rounded hover:bg-gray-50 flex items-center gap-1"
+                >
                     <Folder className="w-3 h-3" />
                     Open Folder
                 </button>
@@ -124,6 +142,13 @@ export default function DownloadItem({ item }: { item: DownloadItemType }) {
         <div className="flex-1 flex flex-col justify-center">
              {renderStatus()}
         </div>
+        <button 
+            onClick={() => removeDownload(item.id)}
+            className="text-gray-400 hover:text-red-500 p-2 transition-colors self-start"
+            title="Remove"
+        >
+            <Trash2 className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

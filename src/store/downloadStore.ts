@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type DownloadStatus = 'fetching_metadata' | 'quality_selection' | 'queued' | 'downloading' | 'completed' | 'failed';
+export type DownloadStatus = 'fetching_metadata' | 'quality_selection' | 'queued' | 'initializing' | 'downloading' | 'completed' | 'failed';
 
 export interface VideoFormat {
   format_id: string;

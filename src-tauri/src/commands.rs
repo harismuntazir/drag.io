@@ -95,7 +95,7 @@ pub async fn download_video(app: AppHandle, id: String, url: String, format_id: 
             "-P", &path,
             "-N", max_concurrent.to_string().as_str(),
             "--merge-output-format", "mp4",
-            "--progress-template", "%(progress.value)s;%(progress.speed)s;%(progress.eta)s",
+            "--progress-template", "%(progress._percent_str)s;%(progress._speed_str)s;%(progress._eta_str)s",
             &url
         ])
         .spawn()
