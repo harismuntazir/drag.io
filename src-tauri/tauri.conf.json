@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "LocalSave",
+  "productName": "Drag.io",
   "version": "0.1.0",
-  "identifier": "com.localsave.app",
+  "identifier": "com.dragio.app",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
