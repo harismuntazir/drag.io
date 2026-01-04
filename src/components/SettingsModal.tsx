@@ -14,7 +14,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     defaultDownloadPath, 
     setDefaultDownloadPath, 
     maxConcurrentDownloads, 
-    setMaxConcurrentDownloads 
+    setMaxConcurrentDownloads,
+    maxActiveDownloads,
+    setMaxActiveDownloads
   } = useSettingsStore();
 
   const handleSelectFolder = async () => {
@@ -104,15 +106,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <div className="flex justify-between items-center">
                 <label className="font-bold block">Max Simultaneous Downloads</label>
                 <span className="font-mono bg-black text-white px-2 py-0.5 rounded text-sm">
-                    {useSettingsStore(s => s.maxActiveDownloads)}
+                    {maxActiveDownloads}
                 </span>
             </div>
             <input 
                 type="range" 
                 min="1" 
                 max="5" 
-                value={useSettingsStore(s => s.maxActiveDownloads)}
-                onChange={(e) => useSettingsStore.getState().setMaxActiveDownloads(Number(e.target.value))}
+                value={maxActiveDownloads}
+                onChange={(e) => setMaxActiveDownloads(Number(e.target.value))}
                 className="w-full accent-black h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-xs text-gray-500 font-medium">

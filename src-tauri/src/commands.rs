@@ -86,18 +86,58 @@ pub async fn download_video(app: AppHandle, id: String, url: String, format_id: 
     // If user selected "137" (1080p), we want "137+bestaudio/best".
     // But format_id passed from frontend might be just the video ID.
     // We assume frontend passes the video ID.
+    // Prepare arguments
     let format_arg = format!("{}+bestaudio/best", format_id);
+    let mut args = vec![
+        "-f".to_string(), format_arg,
+        "-P".to_string(), path,
+        "-N".to_string(), max_concurrent.to_string(),
+        "--merge-output-format".to_string(), "mp4".to_string(),
+        "--progress-template".to_string(), "%(progress._percent_str)s;%(progress._speed_str)s;%(progress._eta_str)s".to_string(),
+        url,
+    ];
 
-    let (mut rx, _child) = app.shell().sidecar("yt-dlp")
-        .map_err(|e| e.to_string())?
-        .args([
-            "-f", &format_arg,
-            "-P", &path,
-            "-N", max_concurrent.to_string().as_str(),
-            "--merge-output-format", "mp4",
-            "--progress-template", "%(progress._percent_str)s;%(progress._speed_str)s;%(progress._eta_str)s",
-            &url
-        ])
+    // Setup command
+    let mut command = app.shell().sidecar("yt-dlp").map_err(|e| e.to_string())?;
+
+    // Add FFmpeg path logic
+    #[cfg(debug_assertions)]
+    {
+        // In dev, add src-tauri/bin to PATH
+        if let Ok(cwd) = std::env::current_dir() {
+            let bin_dir = cwd.join("bin"); // Assuming running from src-tauri? Or project root?
+            // Tauri dev runs from project root usually?
+            // If bin_dir doesn't exist, try src-tauri/bin
+            let candidate = if bin_dir.exists() && bin_dir.join("ffmpeg-aarch64-apple-darwin").exists() {
+                bin_dir
+            } else {
+                cwd.join("src-tauri/bin")
+            };
+
+            if candidate.exists() {
+                if let Ok(path_var) = std::env::var("PATH") {
+                    let new_path = format!("{}:{}", candidate.to_string_lossy(), path_var);
+                     command = command.env("PATH", new_path);
+                }
+            }
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
+    {
+        // In prod, executable directory usually contains sidecars
+        if let Ok(exe_path) = std::env::current_exe() {
+             if let Some(exe_dir) = exe_path.parent() {
+                 if let Ok(path_var) = std::env::var("PATH") {
+                     let new_path = format!("{}:{}", exe_dir.to_string_lossy(), path_var);
+                     command = command.env("PATH", new_path);
+                 }
+             }
+         }
+    }
+
+    let (mut rx, _child) = command
+        .args(args)
         .spawn()
         .map_err(|e| e.to_string())?;
 
