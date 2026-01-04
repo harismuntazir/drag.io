@@ -119,13 +119,6 @@ export default function DownloadItem({ item }: { item: DownloadItemType }) {
                     <CheckCircle className="text-green-500 w-5 h-5" />
                     <span className="font-medium">{item.title}</span>
                 </div>
-                <button 
-                    onClick={handleOpenFolder}
-                    className="text-sm border border-gray-300 px-3 py-1 rounded hover:bg-gray-50 flex items-center gap-1"
-                >
-                    <Folder className="w-3 h-3" />
-                    Open Folder
-                </button>
             </div>
         );
       default:

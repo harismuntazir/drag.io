@@ -3,27 +3,49 @@
 import AddUrl from '@/components/AddUrl';
 import DownloadList from '@/components/DownloadList';
 import SettingsModal from '@/components/SettingsModal';
-import { Settings } from 'lucide-react';
+import { Settings, Folder, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
+import { useSettingsStore } from '@/store/settingsStore';
+import { open } from '@tauri-apps/plugin-shell';
+import { downloadDir } from '@tauri-apps/api/path';
 
 export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { defaultDownloadPath } = useSettingsStore();
+
+  const handleOpenDownloads = async () => {
+    try {
+        const path = defaultDownloadPath || await downloadDir();
+        await open(path);
+    } catch (e) {
+        console.error('Failed to open downloads folder:', e);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-white text-black p-8 font-sans">
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       <div className="max-w-3xl mx-auto">
-        <header className="mb-10 text-center relative">
-          <button 
-            onClick={() => setIsSettingsOpen(true)}
-            className="absolute right-0 top-0 p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-6 h-6" />
-          </button>
-          <h1 className="text-4xl font-black tracking-tighter mb-2">YT-DLP DOWNLOADER</h1>
+        <header className="mb-10 text-center relative flex justify-center items-center">
+          <div className="absolute right-0 top-0 flex gap-2">
+            <button 
+                onClick={handleOpenDownloads}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700"
+                title="Open Downloads Folder"
+            >
+                <FolderOpen className="w-6 h-6" />
+            </button>
+            <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700"
+                title="Settings"
+            >
+                <Settings className="w-6 h-6" />
+            </button>
+          </div>
+          <h1 className="text-4xl font-black tracking-tighter mb-2">LOCAL SAVE</h1>
           <p className="text-gray-500 font-medium tracking-wide text-sm uppercase">
-            Constructed with Tauri & Next.js
+            Your Content • Offline • Forever
           </p>
         </header>
 
