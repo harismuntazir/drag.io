@@ -14,13 +14,6 @@ Drag.io is a powerful, minimalist, and offline-first media downloader for macOS.
 -   **Offline First**: All dependencies (`yt-dlp`, `ffmpeg`) are bundled. No external installs required.
 -   **Native Performance**: Built with Tauri (Rust) and Next.js for a blazing fast, lightweight experience on Apple Silicon.
 
-## Installation 📦
-
-1.  Download the latest `.dmg` from the [Releases](https://github.com/harismuntazir/drag.io/releases) page.
-2.  Open the `.dmg` file.
-3.  Drag **Drag.io** into your **Applications** folder.
-4.  Launch the app!
-
 ## Usage 🛠️
 
 ### Method 1: The "Drag It!" Button (Recommended)
