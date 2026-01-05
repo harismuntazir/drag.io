@@ -43,10 +43,12 @@ export default function Home() {
                 <Settings className="w-6 h-6" />
             </button>
           </div>
-          <h1 className="text-4xl font-black tracking-tighter mb-2">Drag.io</h1>
-          <p className="text-gray-500 font-medium tracking-wide text-sm uppercase block">
-            Your Offline Media Store
-          </p>
+          <div className="flex flex-col items-center">
+            <h1 className="text-4xl font-black tracking-tighter mb-2">Drag.io</h1>
+            <p className="text-gray-500 font-medium tracking-wide text-sm uppercase">
+              Your Offline Media Store
+            </p>
+          </div>
         </header>
 
         <AddUrl />
