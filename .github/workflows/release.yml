@@ -13,10 +13,13 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest'
+            target: 'aarch64-apple-darwin'
             args: '--target aarch64-apple-darwin'
           - platform: 'ubuntu-22.04'
+            target: 'x86_64-unknown-linux-gnu'
             args: ''
           - platform: 'windows-latest'
+            target: 'x86_64-pc-windows-msvc'
             args: ''
 
     runs-on: ${{ matrix.platform }}
@@ -31,7 +34,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
+          targets: ${{ matrix.target }}
 
       - name: Install dependencies (Ubuntu)
         if: matrix.platform == 'ubuntu-22.04'
@@ -46,7 +49,7 @@ jobs:
         run: pnpm install
 
       - name: Download Sidecars (yt-dlp)
-        run: node scripts/download-sidecars.mjs
+        run: node scripts/download-sidecars.mjs ${{ matrix.target }}
 
       - name: Download FFmpeg (Windows)
         if: matrix.platform == 'windows-latest'
@@ -66,7 +69,7 @@ jobs:
       - name: Download FFmpeg (macOS)
         if: matrix.platform == 'macos-latest'
         run: |
-          curl -L -o ffmpeg.zip https://evermeet.cx/ffmpeg/ffmpeg-6.0.zip
+          curl -L -o ffmpeg.zip https://mediaarea.net/download/binary/ffmpeg/7.0.1/FFmpeg_7.0.1_macOS_64-bit_binary_signed.zip
           unzip ffmpeg.zip
           mv ffmpeg src-tauri/bin/ffmpeg-aarch64-apple-darwin
           chmod +x src-tauri/bin/ffmpeg-aarch64-apple-darwin

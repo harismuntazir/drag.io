@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Drag.io",
   "version": "1.0.0",
-  "identifier": "com.dragio.app",
+  "identifier": "com.dragio.downloader",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
