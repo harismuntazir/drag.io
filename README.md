@@ -35,9 +35,9 @@ Drag.io is a powerful, minimalist, and offline-first media downloader for macOS.
 2.  Paste it into the input box in the Drag.io app.
 3.  Click **Download**.
 
-## Development 💻
+## Build from Source (Developers Only) �️
 
-This project is built with the **Tauri v2** stack.
+If you want to modify the code or build it yourself, you'll need the following. **Normal users do NOT need these.**
 
 ### Prerequisites
 -   Node.js (v18+)
