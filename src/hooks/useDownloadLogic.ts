@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useDownloadStore } from '@/store/downloadStore';
 import { fetchMetadata } from '@/lib/tauri';
 
@@ -7,7 +7,7 @@ export function useDownloadLogic() {
   const addDownloadStore = useDownloadStore((state) => state.addDownload);
   const updateDownloadStore = useDownloadStore((state) => state.updateDownload);
 
-  const startDownloadProcess = async (url: string) => {
+  const startDownloadProcess = useCallback(async (url: string) => {
     if (!url.trim()) return;
     
     // Deduplication check
@@ -36,7 +36,7 @@ export function useDownloadLogic() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addDownloadStore, updateDownloadStore]);
 
   return { loading, startDownloadProcess };
 }

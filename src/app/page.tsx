@@ -69,7 +69,16 @@ export default function Home() {
   const handleOpenDownloads = async () => {
     try {
         const path = defaultDownloadPath || await downloadDir();
-        await open(path);
+        console.log('Attempting to open folder at:', path);
+        try {
+            await open(path);
+        } catch (innerErr) {
+            console.warn('shell.open failed, trying fallback command:', innerErr);
+            // Fallback for macOS specifically using the allowed executable
+            const { Command } = await import('@tauri-apps/plugin-shell');
+            const cmd = Command.create('run-open', [path]);
+            await cmd.execute();
+        }
     } catch (e) {
         console.error('Failed to open downloads folder:', e);
     }

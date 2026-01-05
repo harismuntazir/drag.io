@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "YouTube Downloader",
+        "title": "Drag.io",
         "width": 800,
         "height": 600,
         "resizable": true,

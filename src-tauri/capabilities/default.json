@@ -17,6 +17,11 @@
           "name": "bin/yt-dlp",
           "cmd": "bin/yt-dlp",
           "args": true
+        },
+        {
+          "name": "run-open",
+          "cmd": "/usr/bin/open",
+          "args": true
         }
       ]
     },
