@@ -201,7 +201,49 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     document.body.appendChild(button);
 })();`} />
             </div>
-          </div>
+            </div>
+            </div>
+
+            {/* About & Updates */}
+            <div className="space-y-4 pt-4 border-t-2 border-dashed border-gray-300">
+                <div>
+                    <h3 className="font-bold text-lg mb-2">About Drag.io</h3>
+                    <div className="text-sm space-y-1">
+                        <p>
+                            <span className="font-semibold">Developer:</span>{' '}
+                            <a href="https://github.com/harismuntazir/" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                Haris Muntazir
+                            </a>
+                        </p>
+                        <p>
+                            <span className="font-semibold">Source Code:</span>{' '}
+                            <a href="https://github.com/harismuntazir/drag.io" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                github.com/harismuntazir/drag.io
+                            </a>
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                            Powered by Tauri v2, Next.js, and yt-dlp.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Update Check Placeholder */}
+                <div className="bg-blue-50 p-3 rounded border border-blue-200 text-xs text-blue-800">
+                    <strong>Need new binaries?</strong>
+                    <p className="mt-1">
+                        To get the latest yt-dlp/ffmpeg, simply check for a new version of Drag.io on GitHub.
+                    </p>
+                    <a 
+                        href="https://github.com/harismuntazir/drag.io/releases" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="block mt-2 font-bold hover:underline"
+                    >
+                        Check for Updates &rarr;
+                    </a>
+                </div>
+            </div>
+            
         </div>
 
         <div className="p-4 border-t-2 border-black bg-gray-50 flex justify-end">
@@ -213,7 +255,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </button>
         </div>
       </div>
-    </div>
   );
 }
 
