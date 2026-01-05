@@ -10,6 +10,13 @@ export function useDownloadLogic() {
   const startDownloadProcess = async (url: string) => {
     if (!url.trim()) return;
     
+    // Deduplication check
+    const existing = useDownloadStore.getState().downloads.find(d => d.url === url && d.status !== 'failed');
+    if (existing) {
+        console.log('URL already exists in queue:', url);
+        return;
+    }
+
     setLoading(true);
     const id = addDownloadStore(url);
 

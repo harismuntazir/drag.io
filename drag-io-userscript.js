@@ -15,7 +15,7 @@
 
     const button = document.createElement('button');
     button.id = BTN_ID;
-    button.innerText = 'Drag It! 🐉';
+    button.innerText = 'Drag It!';
     Object.assign(button.style, {
         position: 'fixed', bottom: '20px', right: '20px', zIndex: '999999',
         padding: '10px 20px', backgroundColor: '#000000', color: '#ffffff',
