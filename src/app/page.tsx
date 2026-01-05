@@ -8,9 +8,9 @@ import { useState } from 'react';
 import { useSettingsStore } from '@/store/settingsStore';
 import { open } from '@tauri-apps/plugin-shell';
 import { downloadDir } from '@tauri-apps/api/path';
-import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
+import { onOpenUrl, getCurrent } from '@tauri-apps/plugin-deep-link';
 import { useDownloadLogic } from '@/hooks/useDownloadLogic';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -18,34 +18,41 @@ export default function Home() {
   const { startDownloadProcess } = useDownloadLogic();
   const [debugMsg, setDebugMsg] = useState<string | null>(null);
 
+  const processDeepLink = useCallback((url: string) => {
+     try {
+        const parsed = new URL(url);
+        const target = parsed.searchParams.get('url');
+        
+        if (target) {
+            setDebugMsg(`Processing: ${target}`);
+            startDownloadProcess(target);
+            setTimeout(() => setDebugMsg(null), 3000);
+        } else {
+            console.warn('No URL param found in:', url);
+            setDebugMsg(`No URL param: ${url}`);
+        }
+     } catch (e) {
+        console.error('Failed to parse deep link:', e);
+        setDebugMsg(`Parse Error: ${String(e)}`);
+     }
+  }, [startDownloadProcess]);
+
   useEffect(() => {
     let unlisten: (() => void) | null = null;
 
     const initDeepLink = async () => {
       try {
+        // Cold Start Check
+        const initialUrls = await getCurrent();
+        if (initialUrls) {
+            console.log('Initial Deep Links:', initialUrls);
+            initialUrls.forEach(processDeepLink);
+        }
+
+        // Listener for runtime
         unlisten = await onOpenUrl((urls) => {
           console.log('Deep link received:', urls);
-          // setDebugMsg(`Received: ${urls.join(', ')}`); // Debug feedback
-
-          for (const url of urls) {
-             try {
-                // Check if it's the custom scheme
-                const parsed = new URL(url);
-                const target = parsed.searchParams.get('url');
-                
-                if (target) {
-                    setDebugMsg(`Processing: ${target}`);
-                    startDownloadProcess(target);
-                    // Clear message after 3s
-                    setTimeout(() => setDebugMsg(null), 3000);
-                } else {
-                    setDebugMsg(`No URL param found in: ${url}`);
-                }
-             } catch (e) {
-                console.error('Failed to parse deep link:', e);
-                setDebugMsg(`Parse Error: ${String(e)}`);
-             }
-          }
+          urls.forEach(processDeepLink);
         });
       } catch (e) {
         console.error('Failed to init deep link listener:', e);
