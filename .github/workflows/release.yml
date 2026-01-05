@@ -65,14 +65,21 @@ jobs:
           wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
           tar xvf ffmpeg-release-amd64-static.tar.xz
           mv ffmpeg-*-amd64-static/ffmpeg src-tauri/bin/ffmpeg-x86_64-unknown-linux-gnu
+          chmod +x src-tauri/bin/ffmpeg-x86_64-unknown-linux-gnu
 
       - name: Download FFmpeg (macOS)
         if: matrix.platform == 'macos-latest'
         run: |
-          curl -L -o ffmpeg.zip https://mediaarea.net/download/binary/ffmpeg/7.0.1/FFmpeg_7.0.1_macOS_64-bit_binary_signed.zip
+          curl -L -o ffmpeg.zip https://evermeet.cx/ffmpeg/ffmpeg-6.0.zip
           unzip ffmpeg.zip
           mv ffmpeg src-tauri/bin/ffmpeg-aarch64-apple-darwin
           chmod +x src-tauri/bin/ffmpeg-aarch64-apple-darwin
+
+      - name: Verify Sidecars (Debug)
+        shell: bash
+        run: |
+          echo "Listing src-tauri/bin contents:"
+          ls -lR src-tauri/bin
 
       - name: Build App
         uses: tauri-apps/tauri-action@v0

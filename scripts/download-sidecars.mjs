@@ -76,7 +76,13 @@ async function main() {
 
   console.log(`Downloading yt-dlp from ${ytDlpUrl}...`);
   await downloadFile(ytDlpUrl, ytDlpTarget);
-  fs.chmodSync(ytDlpTarget, 0o755);
+  
+  try {
+      fs.chmodSync(ytDlpTarget, 0o755);
+  } catch (e) {
+      console.log('   (Skipped chmod on this platform)');
+  }
+  
   console.log(`✅ yt-dlp ready: ${ytDlpTarget}`);
 
   // 2. ffmpeg (Simplified for CI mainly)
