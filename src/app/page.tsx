@@ -8,10 +8,56 @@ import { useState } from 'react';
 import { useSettingsStore } from '@/store/settingsStore';
 import { open } from '@tauri-apps/plugin-shell';
 import { downloadDir } from '@tauri-apps/api/path';
+import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
+import { useDownloadLogic } from '@/hooks/useDownloadLogic';
+import { useEffect } from 'react';
 
 export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { defaultDownloadPath } = useSettingsStore();
+  const { startDownloadProcess } = useDownloadLogic();
+  const [debugMsg, setDebugMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+
+    const initDeepLink = async () => {
+      try {
+        unlisten = await onOpenUrl((urls) => {
+          console.log('Deep link received:', urls);
+          // setDebugMsg(`Received: ${urls.join(', ')}`); // Debug feedback
+
+          for (const url of urls) {
+             try {
+                // Check if it's the custom scheme
+                const parsed = new URL(url);
+                const target = parsed.searchParams.get('url');
+                
+                if (target) {
+                    setDebugMsg(`Processing: ${target}`);
+                    startDownloadProcess(target);
+                    // Clear message after 3s
+                    setTimeout(() => setDebugMsg(null), 3000);
+                } else {
+                    setDebugMsg(`No URL param found in: ${url}`);
+                }
+             } catch (e) {
+                console.error('Failed to parse deep link:', e);
+                setDebugMsg(`Parse Error: ${String(e)}`);
+             }
+          }
+        });
+      } catch (e) {
+        console.error('Failed to init deep link listener:', e);
+      }
+    };
+    
+    initDeepLink();
+
+    return () => {
+        if (unlisten) unlisten();
+    };
+  }, [startDownloadProcess]);
 
   const handleOpenDownloads = async () => {
     try {
@@ -50,6 +96,13 @@ export default function Home() {
             </p>
           </div>
         </header>
+
+        {debugMsg && (
+            <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4 animate-in fade-in slide-in-from-top-2">
+                <strong className="font-bold">Deep Link: </strong>
+                <span className="block sm:inline truncate">{debugMsg}</span>
+            </div>
+        )}
 
         <AddUrl />
         

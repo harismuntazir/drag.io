@@ -1,7 +1,7 @@
 import { useSettingsStore } from '@/store/settingsStore';
 import { open } from '@tauri-apps/plugin-dialog';
 import { downloadDir } from '@tauri-apps/api/path';
-import { X, Folder, Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon, X, Folder, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
 interface SettingsModalProps {
@@ -39,8 +39,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="flex justify-between items-center p-4 border-b-2 border-black bg-gray-50">
+      <div className="bg-white rounded-xl border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md max-h-[85vh] flex flex-col animate-in fade-in zoom-in duration-200">
+        <div className="flex justify-between items-center p-4 border-b-2 border-black bg-gray-50 flex-shrink-0">
           <div className="flex items-center gap-2 font-bold text-lg">
             <SettingsIcon className="w-5 h-5" />
             <span>Settings</span>
@@ -50,7 +50,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </button>
         </div>
         
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
           {/* Default Download Folder */}
           <div className="space-y-2">
             <label className="font-bold block">Default Download Folder</label>
@@ -122,6 +122,86 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <span>5 (Parallel)</span>
             </div>
           </div>
+
+          {/* Browser Integration */}
+          <div className="space-y-2">
+            <label className="font-bold block">Browser Integration (Tampermonkey)</label>
+            <p className="text-xs text-gray-500 mb-2">
+                Copy this script to Tampermonkey to add a "Drag It!" button to your browser.
+            </p>
+            <div className="relative">
+                <textarea 
+                    readOnly
+                    className="w-full h-32 p-3 text-xs font-mono bg-gray-50 border-2 border-black/20 rounded resize-none focus:outline-none"
+                    value={`// ==UserScript==
+// @name         Drag.io - Drag It!
+// @namespace    http://tampermonkey.net/
+// @version      1.1
+// @description  Add a "Drag It!" button to send page URL to Drag.io app
+// @match        *://*/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    const BTN_ID = 'drag-io-float-btn';
+    if (document.getElementById(BTN_ID)) return;
+
+    const button = document.createElement('button');
+    button.id = BTN_ID;
+    button.innerText = 'Drag It! 🐉';
+    Object.assign(button.style, {
+        position: 'fixed', bottom: '20px', right: '20px', zIndex: '999999',
+        padding: '10px 20px', backgroundColor: '#000000', color: '#ffffff',
+        border: '2px solid #ffffff', borderRadius: '8px', cursor: 'pointer',
+        fontWeight: 'bold', fontFamily: 'system-ui, sans-serif',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)', transition: 'transform 0.1s ease',
+        pointerEvents: 'auto'
+    });
+    button.onmouseover = () => button.style.transform = 'scale(1.05)';
+    button.onmouseout = () => button.style.transform = 'scale(1)';
+    button.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        window.location.href = \`dragio://open?url=\${encodeURIComponent(window.location.href)}\`;
+    };
+    document.body.appendChild(button);
+})();`}
+                />
+                <CopyButton text={`// ==UserScript==
+// @name         Drag.io - Drag It!
+// @namespace    http://tampermonkey.net/
+// @version      1.1
+// @description  Add a "Drag It!" button to send page URL to Drag.io app
+// @match        *://*/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    const BTN_ID = 'drag-io-float-btn';
+    if (document.getElementById(BTN_ID)) return;
+
+    const button = document.createElement('button');
+    button.id = BTN_ID;
+    button.innerText = 'Drag It! 🐉';
+    Object.assign(button.style, {
+        position: 'fixed', bottom: '20px', right: '20px', zIndex: '999999',
+        padding: '10px 20px', backgroundColor: '#000000', color: '#ffffff',
+        border: '2px solid #ffffff', borderRadius: '8px', cursor: 'pointer',
+        fontWeight: 'bold', fontFamily: 'system-ui, sans-serif',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)', transition: 'transform 0.1s ease',
+        pointerEvents: 'auto'
+    });
+    button.onmouseover = () => button.style.transform = 'scale(1.05)';
+    button.onmouseout = () => button.style.transform = 'scale(1)';
+    button.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        window.location.href = \`dragio://open?url=\${encodeURIComponent(window.location.href)}\`;
+    };
+    document.body.appendChild(button);
+})();`} />
+            </div>
+          </div>
         </div>
 
         <div className="p-4 border-t-2 border-black bg-gray-50 flex justify-end">
@@ -134,5 +214,29 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy', err);
+    }
+  };
+
+  return (
+    <button 
+        onClick={handleCopy}
+        className="absolute top-2 right-2 p-2 bg-black text-white rounded hover:bg-gray-800 transition-colors shadow-sm"
+        title="Copy Script"
+    >
+        {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+    </button>
   );
 }

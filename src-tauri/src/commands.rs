@@ -1,7 +1,7 @@
-use tauri::{AppHandle, Emitter};
-use tauri_plugin_shell::ShellExt;
-use tauri_plugin_shell::process::CommandEvent;
 use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Emitter};
+use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_shell::ShellExt;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VideoFormat {
@@ -31,14 +31,13 @@ struct DownloadProgress {
 
 #[tauri::command]
 pub async fn fetch_metadata(app: AppHandle, url: String) -> Result<VideoMetadata, String> {
-    let sidecar_command = app.shell().sidecar("yt-dlp")
+    let sidecar_command = app
+        .shell()
+        .sidecar("yt-dlp")
         .map_err(|e| e.to_string())?
         .args(["--dump-json", &url]);
 
-    let output = sidecar_command
-        .output()
-        .await
-        .map_err(|e| e.to_string())?;
+    let output = sidecar_command.output().await.map_err(|e| e.to_string())?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -46,14 +45,17 @@ pub async fn fetch_metadata(app: AppHandle, url: String) -> Result<VideoMetadata
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value = serde_json::from_str(&stdout)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    let json: serde_json::Value =
+        serde_json::from_str(&stdout).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
     let id = json["id"].as_str().unwrap_or("").to_string();
-    let title = json["title"].as_str().unwrap_or("Unknown Title").to_string();
+    let title = json["title"]
+        .as_str()
+        .unwrap_or("Unknown Title")
+        .to_string();
     let thumbnail = json["thumbnail"].as_str().unwrap_or("").to_string();
     let duration = json["duration"].as_u64();
-    
+
     let mut formats = Vec::new();
     if let Some(formats_arr) = json["formats"].as_array() {
         for fmt in formats_arr {
@@ -61,16 +63,16 @@ pub async fn fetch_metadata(app: AppHandle, url: String) -> Result<VideoMetadata
             let ext = fmt["ext"].as_str().unwrap_or("").to_string();
             // Filter: only mp4/webm and only if height is present (video)
             if height.is_some() {
-                 formats.push(VideoFormat {
-                     format_id: fmt["format_id"].as_str().unwrap_or("").to_string(),
-                     height,
-                     ext,
-                     filesize: fmt["filesize"].as_u64().or(fmt["filesize_approx"].as_u64()),
-                 });
+                formats.push(VideoFormat {
+                    format_id: fmt["format_id"].as_str().unwrap_or("").to_string(),
+                    height,
+                    ext,
+                    filesize: fmt["filesize"].as_u64().or(fmt["filesize_approx"].as_u64()),
+                });
             }
         }
     }
-    
+
     Ok(VideoMetadata {
         id,
         title,
@@ -81,7 +83,14 @@ pub async fn fetch_metadata(app: AppHandle, url: String) -> Result<VideoMetadata
 }
 
 #[tauri::command]
-pub async fn download_video(app: AppHandle, id: String, url: String, format_id: String, path: String, max_concurrent: u32) -> Result<(), String> {
+pub async fn download_video(
+    app: AppHandle,
+    id: String,
+    url: String,
+    format_id: String,
+    path: String,
+    max_concurrent: u32,
+) -> Result<(), String> {
     // format_id usually needs to select video+audio.
     // If user selected "137" (1080p), we want "137+bestaudio/best".
     // But format_id passed from frontend might be just the video ID.
@@ -89,11 +98,16 @@ pub async fn download_video(app: AppHandle, id: String, url: String, format_id: 
     // Prepare arguments
     let format_arg = format!("{}+bestaudio/best", format_id);
     let mut args = vec![
-        "-f".to_string(), format_arg,
-        "-P".to_string(), path,
-        "-N".to_string(), max_concurrent.to_string(),
-        "--merge-output-format".to_string(), "mp4".to_string(),
-        "--progress-template".to_string(), "%(progress._percent_str)s;%(progress._speed_str)s;%(progress._eta_str)s".to_string(),
+        "-f".to_string(),
+        format_arg,
+        "-P".to_string(),
+        path,
+        "-N".to_string(),
+        max_concurrent.to_string(),
+        "--merge-output-format".to_string(),
+        "mp4".to_string(),
+        "--progress-template".to_string(),
+        "%(progress._percent_str)s;%(progress._speed_str)s;%(progress._eta_str)s".to_string(),
         url,
     ];
 
@@ -106,18 +120,19 @@ pub async fn download_video(app: AppHandle, id: String, url: String, format_id: 
         // In dev, add src-tauri/bin to PATH
         if let Ok(cwd) = std::env::current_dir() {
             let bin_dir = cwd.join("bin"); // Assuming running from src-tauri? Or project root?
-            // Tauri dev runs from project root usually?
-            // If bin_dir doesn't exist, try src-tauri/bin
-            let candidate = if bin_dir.exists() && bin_dir.join("ffmpeg-aarch64-apple-darwin").exists() {
-                bin_dir
-            } else {
-                cwd.join("src-tauri/bin")
-            };
+                                           // Tauri dev runs from project root usually?
+                                           // If bin_dir doesn't exist, try src-tauri/bin
+            let candidate =
+                if bin_dir.exists() && bin_dir.join("ffmpeg-aarch64-apple-darwin").exists() {
+                    bin_dir
+                } else {
+                    cwd.join("src-tauri/bin")
+                };
 
             if candidate.exists() {
                 if let Ok(path_var) = std::env::var("PATH") {
                     let new_path = format!("{}:{}", candidate.to_string_lossy(), path_var);
-                     command = command.env("PATH", new_path);
+                    command = command.env("PATH", new_path);
                 }
             }
         }
@@ -127,19 +142,16 @@ pub async fn download_video(app: AppHandle, id: String, url: String, format_id: 
     {
         // In prod, executable directory usually contains sidecars
         if let Ok(exe_path) = std::env::current_exe() {
-             if let Some(exe_dir) = exe_path.parent() {
-                 if let Ok(path_var) = std::env::var("PATH") {
-                     let new_path = format!("{}:{}", exe_dir.to_string_lossy(), path_var);
-                     command = command.env("PATH", new_path);
-                 }
-             }
-         }
+            if let Some(exe_dir) = exe_path.parent() {
+                if let Ok(path_var) = std::env::var("PATH") {
+                    let new_path = format!("{}:{}", exe_dir.to_string_lossy(), path_var);
+                    command = command.env("PATH", new_path);
+                }
+            }
+        }
     }
 
-    let (mut rx, _child) = command
-        .args(args)
-        .spawn()
-        .map_err(|e| e.to_string())?;
+    let (mut rx, _child) = command.args(args).spawn().map_err(|e| e.to_string())?;
 
     let app_handle = app.clone();
     let download_id = id.clone();
@@ -154,58 +166,69 @@ pub async fn download_video(app: AppHandle, id: String, url: String, format_id: 
                     // yt-dlp with template usually prints one per line?
                     // if line is empty skip.
                     let trimmed = line.trim();
-                    if trimmed.is_empty() { continue; }
-                    
+                    if trimmed.is_empty() {
+                        continue;
+                    }
+
                     let parts: Vec<&str> = trimmed.split(';').collect();
                     if parts.len() >= 3 {
-                         // Parse percentage
-                         // "12.3%" -> strip %? No, value is usually raw number? 
-                         // Check yt-dlp docs: %(progress.value)s is usually percentage if available or bytes?
-                         // Actually %(progress._percent_str)s is string. 
-                         // If I use %(progress.value)s it might be specific.
-                         // Let's stick to standard behavior parse for robustness or adjust template.
-                         // Wait, if I use template, I control output.
-                         // Let's assume user has standard yt-dlp.
-                         // If parts[0] is say "NA", progress is unknown.
-                         
-                         // Try parsing parts[0] as f64 (it might include % char?)
-                         // Usually "12.3".
-                         let progress = parts[0].replace('%', "").parse::<f64>().unwrap_or(0.0);
-                         let speed = parts[1].to_string();
-                         let eta = parts[2].to_string();
-                         
-                         let _ = app_handle.emit("download-progress", DownloadProgress {
-                             id: download_id.clone(),
-                             status: "downloading".to_string(),
-                             progress,
-                             speed,
-                             eta,
-                         });
+                        // Parse percentage
+                        // "12.3%" -> strip %? No, value is usually raw number?
+                        // Check yt-dlp docs: %(progress.value)s is usually percentage if available or bytes?
+                        // Actually %(progress._percent_str)s is string.
+                        // If I use %(progress.value)s it might be specific.
+                        // Let's stick to standard behavior parse for robustness or adjust template.
+                        // Wait, if I use template, I control output.
+                        // Let's assume user has standard yt-dlp.
+                        // If parts[0] is say "NA", progress is unknown.
+
+                        // Try parsing parts[0] as f64 (it might include % char?)
+                        // Usually "12.3".
+                        let progress = parts[0].replace('%', "").parse::<f64>().unwrap_or(0.0);
+                        let speed = parts[1].to_string();
+                        let eta = parts[2].to_string();
+
+                        let _ = app_handle.emit(
+                            "download-progress",
+                            DownloadProgress {
+                                id: download_id.clone(),
+                                status: "downloading".to_string(),
+                                progress,
+                                speed,
+                                eta,
+                            },
+                        );
                     }
                 }
                 CommandEvent::Stderr(line_bytes) => {
-                     // Log errors or handle merging messages
-                     let _log = String::from_utf8_lossy(&line_bytes);
-                     // Sometimes yt-dlp prints regular info to stderr.
+                    // Log errors or handle merging messages
+                    let _log = String::from_utf8_lossy(&line_bytes);
+                    // Sometimes yt-dlp prints regular info to stderr.
                 }
                 CommandEvent::Terminated(payload) => {
                     if let Some(code) = payload.code {
                         if code == 0 {
-                             let _ = app_handle.emit("download-progress", DownloadProgress {
-                                 id: download_id.clone(),
-                                 status: "completed".to_string(),
-                                 progress: 100.0,
-                                 speed: "-".to_string(),
-                                 eta: "-".to_string(),
-                             });
+                            let _ = app_handle.emit(
+                                "download-progress",
+                                DownloadProgress {
+                                    id: download_id.clone(),
+                                    status: "completed".to_string(),
+                                    progress: 100.0,
+                                    speed: "-".to_string(),
+                                    eta: "-".to_string(),
+                                },
+                            );
                         } else {
-                             let _ = app_handle.emit("download-progress", DownloadProgress {
-                                 id: download_id.clone(),
-                                 status: "failed".to_string(),
-                                 progress: 0.0,
-                                 speed: "-".to_string(),
-                                 eta: "-".to_string(),
-                             });
+                            let _ = app_handle.emit(
+                                "download-progress",
+                                DownloadProgress {
+                                    id: download_id.clone(),
+                                    status: "failed".to_string(),
+                                    progress: 0.0,
+                                    speed: "-".to_string(),
+                                    eta: "-".to_string(),
+                                },
+                            );
                         }
                     }
                 }
