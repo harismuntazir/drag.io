@@ -63,6 +63,19 @@ pnpm tauri dev
 pnpm tauri build --target aarch64-apple-darwin
 ```
 
+### How to Release 🚀
+
+Automated builds for macOS, Windows, and Linux are handled by GitHub Actions.
+
+1.  **Update Version**: Bump version in `package.json` and `src-tauri/tauri.conf.json`.
+2.  **Tag & Push**:
+    ```bash
+    git commit -am "chore: release v1.0.0"
+    git tag v1.0.0
+    git push origin v1.0.0
+    ```
+3.  **Check Actions**: Go to the GitHub "Actions" tab to see the build progress and download artifacts.
+
 ### Cross-Platform Support 🌍
 
 Drag.io works on Windows and Linux too! To build for other platforms:
